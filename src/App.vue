@@ -2,11 +2,13 @@
   <div id="app">
     <Header :cart="cart" :currency="currency"></Header>
     <List :currency="currency"/>
-    <Cart :cart="cart"/>
+    <Cart :cart="cart" :currency="currency"/>
   </div>
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex';
+
 import Header from './components/Header.vue';
 import List from './components/List.vue';
 import Cart from './components/Cart.vue';
@@ -15,8 +17,9 @@ export default {
   name: 'App',
   data() {
     return {
-      cart: [],
-      currency: 'VGTB',
+       // Extract to vuex state
+      // cart: [],
+      // currency: 'VGTB',
     };
   },
   components: {
@@ -24,6 +27,9 @@ export default {
     List,
     Cart,
   },
+  computed: {
+    ...mapGetters(['products', 'cart', 'currency'])
+  }
 }
 </script>
 

@@ -1,88 +1,101 @@
 <template>
   <div class="product-list">
-    <div class="card" v-for="product in products" :style="{width: cardsWidth + '%'}">
-      <p class="card-title">{{ product.title }}</p>
-      <img class="card-image" :src="product.image" alt="">
-      <p class="card-price">Цена: {{ product.price }} {{ currency }}</p>
-
-      <div>
-        <input type="number" ref="amount" :id="product.id">
-        <span>кг</span>
-      </div>
-
-      <button @click="addToCart(product)"> В корзину </button>
-    </div>
+    <ProductCard v-for="product in products"
+                 :key="product.id"
+                 :product="product"
+                 :cardWidth="cardsWidth"
+                 :currency="currency"
+                 @add-to-cart="addToCart"/>
   </div>
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex';
+import ProductCard from './ProductCard';
+
 export default {
+  name: 'List',
+
+  components: {
+    ProductCard
+  },
+
   props: {
     currency: String,
+    default: 'VGTB'
   },
+
   data() {
     return {
-      products: [],
+      // Extract to vuex state
+      // products: [],
+
+      windowWidth: window.innerWidth,
+      pricesMonitoringId: 0
     };
   },
+
   computed: {
+    ...mapGetters(['products']),
+
     cardsWidth() {
-      let width = window.innerWidth;
+      // I would implement this functional with css grid
+
+      // width is a number and not reactive
+      // let width = window.innerWidth;
       let count = 1;
-      if (width > '840px') {
+      if (this.windowWidth > 840) {
         count = 3;
-      } else if ((width > '420px' && width < '840px')) {
+      } else if ((this.windowWidth > 420 && this.windowWidth < 840)) {
         count = 2;
       }
 
       return 100 / count;
     },
   },
+
   methods: {
+    ...mapActions(['getProductsList', 'addProductToCart']),
+
     startPricesMonitoring() {
-      setInterval(this.getList, 1000);
+      const frequency = 2000;
+      this.pricesMonitoringId = setInterval(this.getProductsList, frequency);
     },
-    async getList() {
-      let data = await this.$store.dispatch('getProductsList');
 
-      this.products = data;
+    stopPricesMonitoring() {
+      clearInterval(this.pricesMonitoringId);
     },
-    addToCart(product) {
-      let amount = this.$refs.amount.find((input) => input.id === product.id).value;
 
-      let data = {
-        amount,
-        price: product.price,
-        title: product.title,
-      };
-      this.$parent.cart.push(data);
+    // Extract to vuex actions
+    // async getList() {
+    //   let data = await this.$store.dispatch('getProductsList');
+
+    //   this.products = data;
+    // },
+
+    addToCart({cartItem}) {
+      this.addProductToCart(cartItem);
     },
+
+    windowWidthHandler() {
+      this.windowWidth = window.innerWidth;
+    }
   },
+
   created() {
     this.startPricesMonitoring();
+    window.addEventListener('resize', this.windowWidthHandler, { passive: true });
   },
+
+  beforeDestroy() {
+    this.stopPricesMonitoring();
+    window.removeEventListener('resize', this.windowWidthHandler, { passive: true });
+  }
 };
 </script>
 
 <style>
-  .product-list {
-    padding: 10px;
-  }
-
-  .card {
-    display: inline-block;
-    width: 100%;
-    border: 1px solid #908888;
-    border-radius: 5px;
-    text-align: center;
-    padding: 10px;
-  }
-  .card-image {
-    width: 100%;
-  }
-  button {
-    padding: 5px;
-    margin: 5px;
-  }
-
+.product-list {
+  padding: 10px;
+}
 </style>
